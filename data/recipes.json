@@ -20,13 +20,13 @@
   "screw": {
     "produced_in": "constructor",
     "time_s": 6.0,
-    "output": {"iron_rod": 1},
+    "output": {"screw": 1},
     "input": {"iron_ingot": 1}
   },
   "reinforced_iron_plate": {
     "produced_in": "assembler",
     "time_s": 12.0,
-    "output": {"iron_ingot": 1},
+    "output": {"reinforced_iron_plate": 1},
     "input": {"iron_plate": 6, "screw": 12}
   }
 }
