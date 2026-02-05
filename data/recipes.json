@@ -20,7 +20,7 @@
   "screw": {
     "produced_in": "constructor",
     "time_s": 6.0,
-    "output": {"screw": 1},
+    "output": {"screw": 4},
     "input": {"iron_ingot": 1}
   },
   "reinforced_iron_plate": {
