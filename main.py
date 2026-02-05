@@ -59,12 +59,32 @@ def validate_recipes(recipes: dict) -> None:
             raise ValueError(f"{item_name}: produced_in must be a non-empty string")
 
 
+def output_per_min_per_machine(item: str, recipes: dict) -> float:
+    if item not in recipes:
+        raise ValueError(f"No recipe for item '{item}'")
+
+    recipe = recipes[item]
+    time_s = recipe["time_s"]
+    qty_out = recipe["output"][item]
+
+    crafts_per_min = 60 / time_s
+    return crafts_per_min * qty_out
+
+
+
 def main():
     recipes = load_json(path_recipes)
     buildings = load_json(path_buildings)
 
     validate_recipes(recipes)
     print("recipes.json validated ✅")
+
+    print()
+    print("=== Output per machine ===")
+    for item in ["iron_plate", "iron_rod", "screw", "reinforced_iron_plate"]:
+        rate = output_per_min_per_machine(item, recipes)
+        print(f"{item}: {rate:.2f} / min per machine")
+
 
     print(f"Loaded {len(recipes)} recipes from {path_recipes}")
     print(f"Loaded {len(buildings)} buildings from {path_buildings}")
