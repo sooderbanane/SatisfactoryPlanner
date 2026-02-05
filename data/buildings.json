@@ -1,0 +1,17 @@
+{
+  "smelter":{
+    "power_mw": 4.0,
+    "water_m3_min": 0.0,
+    "build_cost": { "iron": 5, "iron_rod": 5}
+  },
+  "constructor": {
+    "power_mw": 4.0,
+    "water_m3_min": 0.0,
+    "build_cost": { "iron_plate": 8, "iron_rod": 5, "cable": 10 }
+  },
+  "assembler": {
+    "power_mw": 15.0,
+    "water_m3_min": 0.0,
+    "build_cost": { "iron_plate": 10, "iron_rod": 10, "cable": 20 }
+  }
+}

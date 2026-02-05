@@ -1,0 +1,32 @@
+{
+  "iron_ingot": {
+    "produced_in": "smelter",
+    "time_s": 2.0,
+    "output": {"iron_ingot": 1},
+    "input": {"iron_ore": 1}
+  },
+  "iron_plate": {
+    "produced_in": "constructor",
+    "time_s": 6.0,
+    "output": {"iron_plate": 2},
+    "input": {"iron_ingot": 3}
+  },
+  "iron_rod": {
+    "produced_in": "constructor",
+    "time_s": 4.0,
+    "output": {"iron_rod": 1},
+    "input": {"iron_ingot": 1}
+  },
+  "screw": {
+    "produced_in": "constructor",
+    "time_s": 6.0,
+    "output": {"iron_rod": 1},
+    "input": {"iron_ingot": 1}
+  },
+  "reinforced_iron_plate": {
+    "produced_in": "assembler",
+    "time_s": 12.0,
+    "output": {"iron_ingot": 1},
+    "input": {"iron_plate": 6, "screw": 12}
+  }
+}
