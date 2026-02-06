@@ -132,6 +132,86 @@ def requirements(
         machine_total = merge_dicts(machine_total, mach_sub)
     return raw_total, machine_total 
 
+def build_merged_graph(target_item: str, target_rate: float, recipes: dict) -> tuple[dict, dict]: 
+    item_rate = {}
+    edge_rate ={}
+
+    def add(d,k,v):
+        d[k] = d.get(k, 0.0) + v
+
+
+    def walk(item: str, rate: float, stack=()):
+        if item in stack:
+            raise ValueError("Cycle: " + " -> ".join(stack + (item, ))) 
+        
+        add(item_rate, item, rate)
+
+        if item not in recipes:
+            return
+
+        inputs = expand_one_level(item, rate, recipes)
+        for in_item, in_rate in inputs.items():
+            add(edge_rate, (in_item, item), in_rate)
+            walk(in_item, in_rate, stack + (item, ))
+
+    walk(target_item, target_rate)
+    return item_rate, edge_rate
+
+def compute_node_stats(item_rate: dict, recipes: dict, buildings: dict) -> dict:
+    nodes = {}
+
+    for item, rate in item_rate.items():
+        if item not in recipes:
+            nodes[item] = {"type": "raw", "rate": rate}
+            continue
+
+        out_per_min = output_per_min_per_machine(item, recipes)
+        machines = rate / out_per_min
+
+        building = recipes[item]["produced_in"]
+        p = buildings.get(building, {}).get("power_mw", None)
+        power = None if p is None else p * machines
+
+        nodes[item] = {
+            "type": "crafted",
+            "building": building,
+            "rate": rate,
+            "machines": machines,
+            "power_mw": power,
+        } 
+
+    return nodes
+
+
+def to_mermaid_merged(nodes: dict, edge_rate: dict) -> str:
+    lines = ["```mermaid", "flowchart LR"]
+    def fmt(x): return f"{x:.2f}"
+
+    for item, n in nodes.items():
+        safe_id = "id_" + item.replace("-", "_").replace(" ", "_")
+        n["id"] = safe_id
+
+        if n["type"] == "raw":
+            label = f"RAW<br/>{item}<br/>{fmt(n['rate'])}/min"
+        else: 
+            power_str = "?" if n["power_mw"] is None else f"{n['power_mw']:.1f} MW"
+            label = (
+                f"{n['building'].title()}<br/>"
+                f"{item}<br/>"
+                f"{fmt(n['rate'])}/min<br/>"
+                f"x{fmt(n['machines'])}<br/>"
+                f"{power_str}"
+            )
+
+        lines.append(f' {safe_id}["{label}"]')
+
+    for (src, dst), rate in edge_rate.items():
+        src_id = nodes[src]["id"]
+        dst_id = nodes[dst]["id"]
+        lines.append(f'  {src_id} -->|{src} {fmt(rate)}/min| {dst_id}')
+
+    lines.append("```")
+    return "\n".join(lines)
 
 
 def main():
@@ -141,28 +221,17 @@ def main():
     validate_recipes(recipes)
     print("recipes.json validated ✅")
 
-    print()
-    print("=== Output per machine ===")
-    for item in ["iron_plate", "iron_rod", "screw", "reinforced_iron_plate"]:
-        rate = output_per_min_per_machine(item, recipes)
-        print(f"{item}: {rate:.2f} / min per machine")
+    target_item = "reinforced_iron_plate"
+    target_rate = 10.0
 
+    item_rate, edge_rate = build_merged_graph(target_item, target_rate, recipes)
+    nodes = compute_node_stats(item_rate, recipes, buildings)
 
-    need = expand_one_level("reinforced_iron_plate", 10, recipes)
-    print(need)
-
-    print(f"Loaded {len(recipes)} recipes from {path_recipes}")
-    print(f"Loaded {len(buildings)} buildings from {path_buildings}")
-    print("First recipe keys:", list(recipes.keys())[:5])
-    raw, machines = requirements("reinforced_iron_plate", 10, recipes)
-
-    print("\nRaw materials:")
-    for k, v in raw.items():
-        print(f"{k}: {v:.2f}/min")
-
-    print("\nMachines (ideal, fractional):")
-    for k, v in machines.items():
-        print(f"{k}: {v:.2f}")
+    mermaid = to_mermaid_merged(nodes, edge_rate)
+    out_path = Path("/mnt/c/GIT/obs_vault/Notes/Sources/satisfactory/output/factory.md")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(mermaid, encoding="utf-8")
+    print("Wrote factory.md")
 
 if __name__ == "__main__":
     main()
